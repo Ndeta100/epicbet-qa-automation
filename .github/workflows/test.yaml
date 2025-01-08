@@ -6,6 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
@@ -15,8 +16,15 @@ jobs:
           npm ci
           npx playwright install --with-deps
 
-      - name: Run tests
-        run: npm run test
+      - name: Debug website accessibility
+        run: |
+          curl -I https://epicbet.com/en/sports/
+          echo "Testing website response..."
+
+      - name: Run tests with debug
+        run: PWDEBUG=console npm run test
+        env:
+          DEBUG: pw:api
 
       - name: Upload test results
         if: always()
@@ -25,4 +33,4 @@ jobs:
           name: test-results
           path: |
             playwright-report/
-            screenshots/
+            test-results/

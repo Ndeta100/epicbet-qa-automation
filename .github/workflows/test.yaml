@@ -4,8 +4,19 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Add timeout to prevent long-running tests
+    timeout-minutes: 5  # Reduced from default
+
     steps:
       - uses: actions/checkout@v3
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - uses: actions/setup-node@v3
         with:
@@ -14,23 +25,24 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-          npx playwright install --with-deps
+          # Install only required browsers instead of all
+          npx playwright install chromium
+          npx playwright install-deps chromium
 
-      - name: Debug website accessibility
-        run: |
-          curl -I https://epicbet.com/en/sports/
-          echo "Testing website response..."
-
-      - name: Run tests with debug
-        run: PWDEBUG=console npm run test
+      - name: Run tests with timeout
+        run: npm run test
+        # Add timeout to test command
+        timeout-minutes: 3
         env:
+          CI: true
+          # Add debug logging
           DEBUG: pw:api
+          # Reduce retry attempts in CI
+          PWTEST_REPEAT_EACH: 1
 
       - name: Upload test results
-        if: always()
+        if: failure()  # Only upload on failure
         uses: actions/upload-artifact@v3
         with:
           name: test-results
-          path: |
-            playwright-report/
-            test-results/
+          path: playwright-report/

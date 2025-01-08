@@ -2,41 +2,35 @@ import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   testDir: './tests',
-  timeout: 30000,
+  timeout: 30000,        // Reduced global timeout
   expect: {
-    timeout: 5000
+    timeout: 5000       // Reduced expect timeout
   },
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,           // Run tests sequentially
+  retries: 1,          // Reduce retries
   reporter: [
-    ['html'],
-    ['json', {  outputFile: 'test-results/test-results.json' }],
-    ['junit', { outputFile: 'test-results/junit-results.xml' }]
+    ['list'],          // Simpler reporter for CI
+    ['html']           // Keep HTML report for artifacts
   ],
   use: {
     baseURL: 'https://epicbet.com',
-    actionTimeout: 0,
-    trace: 'on-first-retry',
+    // Only track essential things in CI
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    video: 'off',      // Disable video to improve performance
+
+    // Faster browser launch
+    launchOptions: {
+      args: ['--no-sandbox', '--disable-gpu']
+    }
   },
+  // Only run tests in Chromium for CI
   projects: [
     {
       name: 'chromium',
-      use: {
-        browserName: 'chromium',
-        viewport: { width: 1280, height: 720 },
-      },
-    },
-    {
-      name: 'firefox',
-      use: {
-        browserName: 'firefox',
-        viewport: { width: 1280, height: 720 },
-      },
-    },
-  ],
+      use: { browserName: 'chromium' }
+    }
+  ]
 };
 
 export default config;

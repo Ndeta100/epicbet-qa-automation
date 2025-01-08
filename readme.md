@@ -139,4 +139,4 @@ After running tests:
 
 ## Access to Repository
 
-- Repository URL: [Your Repository URL]
+- Repository URL: [https://github.com/Ndeta100/epicbet-qa-automation]

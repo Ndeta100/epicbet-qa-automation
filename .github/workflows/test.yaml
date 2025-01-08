@@ -4,19 +4,8 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    # Add timeout to prevent long-running tests
-    timeout-minutes: 5  # Reduced from default
-
     steps:
       - uses: actions/checkout@v3
-
-      - name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
 
       - uses: actions/setup-node@v3
         with:
@@ -25,23 +14,15 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-          # Install only required browsers instead of all
           npx playwright install chromium
-          npx playwright install-deps chromium
 
-      - name: Run tests with timeout
-        run: npm run test
-        # Add timeout to test command
-        timeout-minutes: 3
+      - name: Run tests
+        run: xvfb-run --auto-servernum npm run test
         env:
-          CI: true
-          # Add debug logging
-          DEBUG: pw:api
-          # Reduce retry attempts in CI
-          PWTEST_REPEAT_EACH: 1
+          CI: 'true'
 
       - name: Upload test results
-        if: failure()  # Only upload on failure
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: test-results

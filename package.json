@@ -1,0 +1,23 @@
+{
+  "name": "epicbet-qa-automation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "report": "playwright show-report",
+    "test:ui": "playwright test --ui"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.49.1",
+    "@types/node": "^22.10.5",
+    "allure-commandline": "^2.32.0",
+    "allure-playwright": "^3.0.8",
+    "junit-report-merger": "^7.0.0"
+  }
+}

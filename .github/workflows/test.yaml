@@ -1,13 +1,14 @@
-name: Debug E2E Test
+name: E2E Tests
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
-  debug-test:
+  test:
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.49.1-jammy
-      options: --shm-size=2gb
+      options:
+        --ipc=host # Add this for better iframe handling
 
     steps:
       - uses: actions/checkout@v4
@@ -18,35 +19,51 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Debug page load
         run: |
-          cat << EOF > debug-test.js
+          npm ci
+          npx playwright install chromium --with-deps
+
+      # Add this new step to handle cookies and site initialization
+      - name: Initialize site state
+        run: |
+          cat << EOF > init.js
           const { chromium } = require('@playwright/test');
-          
           (async () => {
             const browser = await chromium.launch({
               args: ['--no-sandbox', '--disable-dev-shm-usage']
             });
-            const page = await browser.newPage();
-          
-            console.log('Starting navigation...');
-            await page.goto('https://epicbet.com/sports/');
-            console.log('Page loaded');
-          
-            await page.waitForLoadState('networkidle');
-            console.log('Network idle');
-          
-            const html = await page.content();
-            console.log('Page content length:', html.length);
-          
+            const context = await browser.newContext({
+              ignoreHTTPSErrors: true,
+              bypassCSP: true
+            });
+            const page = await context.newPage();
+            await page.goto('https://epicbet.com/en/sports/', {
+              waitUntil: 'networkidle',
+              timeout: 60000
+            });
             await browser.close();
           })();
           EOF
-          node debug-test.js
+          node init.js
 
-      - name: Run actual test
-        run: npx playwright test
+      - name: Run Playwright tests
+        run: |
+          npx playwright test --config=playwright.config.ts
         env:
+          PLAYWRIGHT_LAUNCH_OPTIONS: >-
+            {
+              "args": [
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-web-security",
+                "--disable-features=IsolateOrigins,site-per-process"
+              ]
+            }
           DEBUG: pw:api
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/

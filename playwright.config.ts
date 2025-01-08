@@ -10,7 +10,19 @@ const config: PlaywrightTestConfig = {
   use: {
     baseURL: 'https://epicbet.com',
     screenshot: 'only-on-failure',
-    trace: 'retain-on-failure'
+    trace: 'retain-on-failure',
+    // Add viewport and browser context settings
+    viewport: { width: 1920, height: 1080 },
+    actionTimeout: 15000,
+    navigationTimeout: 30000,
+    // Add headless mode configuration
+    launchOptions: {
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox'
+      ]
+    }
   },
   projects: [
     {
